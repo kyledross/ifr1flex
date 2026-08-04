@@ -70,7 +70,7 @@ To update to a newer version, simply download the new release and run the `insta
 ## Aircraft Support
 The plugin comes with pre-configured support for several aircraft:
 
-- **General Aviation (G1000)**: Optimized for aircraft like the Cessna 172 G1000 and Cirrus SR22.
+- **General Aviation (G1000)**: Optimized for aircraft equipped with Garmin G1000 units, like the Cessna 172 G1000 and Cirrus SR22.
 - **General Aviation (G430/G530)**: For aircraft using standard Garmin 430/530 units.
 - **Beechcraft King Air/Baron**: Tailored for the default Beechcraft models.
 - **McDonnell-Douglas MD-80**: Basic controls for the MD-80 series.
