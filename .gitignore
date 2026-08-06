@@ -1,12 +1,24 @@
-/docker-build/
-/docker-output/
-.output.txt
-/deploy.sh
-/build/
-.cache
-.idea
-./src/.idea
-/Testing/
+# Local IDE and agent settings
+/.idea/
+/.junie/
+/.vscode/
+/src/.idea/
 /WARP.md
 /AGENTS.md
+
+# Local build products and caches
+/build/
+/cmake-build-*/
+/docker-build/
+/docker-output/
+/_deps/
+/Testing/
+/.cache/
 /compile_commands.json
+/CMakeCache.txt
+/CMakeFiles/
+
+# Local scripts and transient output
+/deploy.sh
+/.output.txt
+/CMakeUserPresets.json

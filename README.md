@@ -34,6 +34,25 @@ Creating software takes time and tools.  If you find this plugin helpful, please
 
 ### Hardware
 - Octavi IFR-1 USB controller
+## Development
+
+The project uses CMake 3.25 or later and C++23. Shared Debug and Release configurations are available through `CMakePresets.json`:
+
+```bash
+cmake --preset debug
+cmake --build build/debug
+ctest --test-dir build/debug --output-on-failure
+```
+
+Use `release` in place of `debug` for an optimized build. `build/`, `cmake-build-*`, and `compile_commands.json` are local generated artifacts and are not tracked. Use `CMakeUserPresets.json` for developer-specific CMake settings.
+
+For the reproducible Linux build and test environment, run:
+
+```bash
+./docker-build.sh
+```
+
+See `CONTRIBUTING.md` for development conventions and testing guidance.
 
 ## Quick Start (Recommended)
 
