@@ -34,26 +34,6 @@ Creating software takes time and tools.  If you find this plugin helpful, please
 
 ### Hardware
 - Octavi IFR-1 USB controller
-## Development
-
-The project uses CMake 3.25 or later and C++23. Shared Debug and Release configurations are available through `CMakePresets.json`:
-
-```bash
-cmake --preset debug
-cmake --build build/debug
-ctest --test-dir build/debug --output-on-failure
-```
-
-Use `release` in place of `debug` for an optimized build. `build/`, `cmake-build-*`, and `compile_commands.json` are local generated artifacts and are not tracked. Use `CMakeUserPresets.json` for developer-specific CMake settings.
-
-For the reproducible Linux build and test environment, run:
-
-```bash
-./docker-build.sh
-```
-
-See `CONTRIBUTING.md` for development conventions and testing guidance.
-
 ## Quick Start (Recommended)
 
 The easiest way to install the plugin is to use the provided installation script.
@@ -85,6 +65,71 @@ After the installation is finished, connect your IFR-1 device and launch X-Plane
 
 ## Updates
 To update to a newer version, simply download the new release and run the `install.sh` script again. It will replace the existing plugin and update the default configurations.
+
+## Building and Development
+
+If you prefer to build the plugin yourself, there are two primary ways to build the ifr1flex plugin: using Docker (recommended for a consistent environment) or building locally on your host machine.
+
+### Method 1: Docker Build (Recommended)
+
+This method uses a Docker container to ensure all dependencies and the correct compiler version are used, producing a portable binary compatible with X-Plane 12 on Linux.
+
+**Prerequisites:**
+- Docker installed and running.
+- Your user added to the `docker` group.
+
+**Build Command:**
+```bash
+./docker-build.sh
+```
+The output will be located in `docker-output/ifr1flex.xpl`. See `DOCKER_BUILD.md` for more details.
+
+### Method 2: Local Build
+
+If you prefer to build natively on your host machine (e.g., for IDE integration or faster incremental builds), you must install the required toolchain and dependencies.
+
+#### Toolchain Requirements
+- **Compiler**: Clang (with C++23 support)
+- **Build System**: CMake 3.25+
+- **Build Tools**: `pkg-config`, `git`, `lld`
+- **Libraries**:
+  - `libudev-dev` (HID communication)
+  - `libusb-1.0-0-dev` (USB support)
+  - `libgl1-mesa-dev` (OpenGL support)
+- **Python**: Python 3 with `Pillow` (PIL) for resource embedding tools.
+
+#### Installation (Ubuntu 24.04)
+Run the following command to install all necessary packages:
+
+```bash
+sudo apt update && sudo apt install -y \
+    clang \
+    lld \
+    cmake \
+    git \
+    pkg-config \
+    libudev-dev \
+    libusb-1.0-0-dev \
+    libgl1-mesa-dev \
+    python3 \
+    python3-pil
+```
+
+#### Build Commands
+Once the dependencies are installed, you can use the CMake presets:
+
+```bash
+# Configure and build Debug version
+cmake --preset debug
+cmake --build build/debug
+
+# Run tests
+ctest --test-dir build/debug --output-on-failure
+```
+
+Use `--preset release` for an optimized build. `build/`, `cmake-build-*`, and `compile_commands.json` are generated artifacts and are not tracked.
+
+See `CONTRIBUTING.md` for development conventions and testing guidance.
 
 ## Aircraft Support
 The plugin comes with pre-configured support for several aircraft:
