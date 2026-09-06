@@ -17,6 +17,7 @@
 #include "DeviceHandler.h"
 #include "Logger.h"
 #include <cctype>
+#include <format>
 
 DeviceHandler::DeviceHandler(IHardwareManager& hw, EventProcessor& eventProc, OutputProcessor& outputProc, SettingsManager& settings, IXPlaneSDK& sdk, bool startThread) 
     : m_hw(hw), m_eventProc(eventProc), m_outputProc(outputProc), m_settings(settings), m_sdk(sdk), m_modeDisplay(sdk, settings) {
@@ -135,6 +136,12 @@ void DeviceHandler::UpdateLEDs(float currentTime) {
     }
 }
 
+void DeviceHandler::FlushWorkerDiagnostics() {
+    while (auto diagnostic = m_workerDiagnostics.Pop()) {
+        IFR1_LOG_ERROR(m_sdk, "{}", *diagnostic);
+    }
+}
+
 void DeviceHandler::ClearLEDs() {
     m_shifted = false;
     m_currentMode = IFR1::Mode::COM1;
@@ -169,7 +176,8 @@ IFR1::HardwareEvent DeviceHandler::ParseReport(const uint8_t* data) {
     if (rawMode <= static_cast<uint8_t>(IFR1::Mode::XPDR)) {
         event.mode = static_cast<IFR1::Mode>(rawMode);
     } else {
-        IFR1_LOG_ERROR(m_sdk, "HID report contained unknown mode byte 0x{:02X}; defaulting to COM1", rawMode);
+        QueueWorkerDiagnostic(
+            std::format("HID report contained unknown mode byte 0x{:02X}; defaulting to COM1", rawMode));
         event.mode = IFR1::Mode::COM1;
     }
 
@@ -194,6 +202,10 @@ IFR1::HardwareEvent DeviceHandler::ParseReport(const uint8_t* data) {
     event.buttonStates[static_cast<int>(IFR1::Button::VS)] = checkBit(data[3], IFR1::BitPosition::VS);
 
     return event;
+}
+
+void DeviceHandler::QueueWorkerDiagnostic(std::string message) {
+    m_workerDiagnostics.Push(std::move(message));
 }
 
 void DeviceHandler::HandleKnobs(const IFR1::HardwareEvent& event, const nlohmann::json& config) const
@@ -324,7 +336,8 @@ void DeviceHandler::ProcessHardware() {
         if (bytesRead >= 8) {
             m_inputQueue.Push(ParseReport(readBuffer));
         } else {
-            IFR1_LOG_ERROR(m_sdk, "Partial HID read ({} bytes); expected at least 8 — report discarded", bytesRead);
+            QueueWorkerDiagnostic(
+                std::format("Partial HID read ({} bytes); expected at least 8 — report discarded", bytesRead));
         }
         if (++reportsRead >= 10) break;
         // Clear the buffer before the next read to avoid stale bytes from a previous partial read

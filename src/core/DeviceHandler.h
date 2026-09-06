@@ -63,12 +63,19 @@ public:
      */
     void ProcessHardware();
 
+    /**
+     * @brief Logs diagnostics produced by the hardware worker thread.
+     * Must be called from X-Plane's main thread.
+     */
+    void FlushWorkerDiagnostics();
+
 private:
     void ProcessReport(const IFR1::HardwareEvent& event, const nlohmann::json& config, float currentTime);
     static std::string GetModeString(IFR1::Mode mode, bool shifted);
     static std::string GetControlString(IFR1::Button button, IFR1::Mode mode);
     void HandleKnobs(const IFR1::HardwareEvent& event, const nlohmann::json& config) const;
     void HandleButtons(const IFR1::HardwareEvent& event, const nlohmann::json& config, float currentTime);
+    void QueueWorkerDiagnostic(std::string message);
     
     void WorkerThread();
     IFR1::HardwareEvent ParseReport(const uint8_t* data);
@@ -86,6 +93,7 @@ private:
     std::atomic<bool> m_running{false};
     ThreadSafeQueue<IFR1::HardwareEvent> m_inputQueue;
     ThreadSafeQueue<uint8_t> m_outputQueue;
+    ThreadSafeQueue<std::string> m_workerDiagnostics;
     std::atomic<bool> m_isConnected{false};
 
     // State

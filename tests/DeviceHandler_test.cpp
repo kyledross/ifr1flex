@@ -577,6 +577,58 @@ TEST(DeviceHandlerTest, Update_InnerKnobLongPressDoesNotPlaySoundIfFileNotFound)
     handler.Update(config, 0.4f);
 }
 
+TEST(DeviceHandlerTest, FlushWorkerDiagnostics_LogsPartialHIDReadOnMainThread) {
+    MockHardwareManager mockHw;
+    MockXPlaneSDK mockSdk;
+    EventProcessor eventProc(mockSdk);
+    OutputProcessor outputProc(mockSdk);
+    SettingsManager settings("test_settings.json");
+    DeviceHandler handler(mockHw, eventProc, outputProc, settings, mockSdk, false);
+
+    EXPECT_CALL(mockHw, IsConnected()).WillRepeatedly(Return(true));
+    EXPECT_CALL(mockHw, Read(_, _, _))
+        .WillOnce(Return(7))
+        .WillOnce(Return(0));
+    EXPECT_CALL(mockSdk, Log(_, _)).Times(0);
+
+    handler.ProcessHardware();
+
+    ::testing::Mock::VerifyAndClearExpectations(&mockSdk);
+    EXPECT_CALL(mockSdk, Log(
+        LogLevel::Error,
+        ::testing::HasSubstr("Partial HID read (7 bytes); expected at least 8")))
+        .Times(1);
+    handler.FlushWorkerDiagnostics();
+}
+
+TEST(DeviceHandlerTest, FlushWorkerDiagnostics_LogsUnknownModeOnMainThread) {
+    MockHardwareManager mockHw;
+    MockXPlaneSDK mockSdk;
+    EventProcessor eventProc(mockSdk);
+    OutputProcessor outputProc(mockSdk);
+    SettingsManager settings("test_settings.json");
+    DeviceHandler handler(mockHw, eventProc, outputProc, settings, mockSdk, false);
+
+    EXPECT_CALL(mockHw, IsConnected()).WillRepeatedly(Return(true));
+    uint8_t report[IFR1::HID_REPORT_SIZE] = {0, 0, 0, 0, 0, 0, 0, 0xFF, 0};
+    EXPECT_CALL(mockHw, Read(_, _, _))
+        .WillOnce([&](uint8_t* buffer, size_t, int) {
+            std::memcpy(buffer, report, IFR1::HID_REPORT_SIZE);
+            return IFR1::HID_REPORT_SIZE;
+        })
+        .WillOnce(Return(0));
+    EXPECT_CALL(mockSdk, Log(_, _)).Times(0);
+
+    handler.ProcessHardware();
+
+    ::testing::Mock::VerifyAndClearExpectations(&mockSdk);
+    EXPECT_CALL(mockSdk, Log(
+        LogLevel::Error,
+        ::testing::HasSubstr("HID report contained unknown mode byte 0xFF; defaulting to COM1")))
+        .Times(1);
+    handler.FlushWorkerDiagnostics();
+}
+
 TEST(DeviceHandlerTest, Update_UsesNewButtonNamesInFMSMode) {
     MockHardwareManager mockHw;
     MockXPlaneSDK mockSdk;

@@ -76,6 +76,7 @@ static float FlightLoopCallback(float /*inElapsedSinceLastCall*/, float /*inElap
 
     try {
         float now = gSDK->GetElapsedTime();
+        gDeviceHandler->FlushWorkerDiagnostics();
 
         // 1. Aircraft detection every 20 frames (or if first time)
         static int lastDetectionCounter = -1;
